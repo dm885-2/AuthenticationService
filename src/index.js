@@ -1,15 +1,9 @@
-import river from "@ovcina/rapidriver";
+import rapid from "@ovcina/rapidriver";
 import jwt from "jsonwebtoken";
 
 const SECRET = process.env.SECRET ?? `3(?<,t2mZxj$5JT47naQFTXwqNWP#W>'*Kr!X!(_M3N.u8v}%N/JYGHC.Zwq.!v-`;  // JWT Token
 const host = process.env.riverUrl ?? `amqp://localhost`;  // RabbitMQ url
 
-/**
- * 
- * @param {*} username 
- * @param {*} password 
- * @returns 
- */
 async function login(username, password)
 {
     if(1)
@@ -18,23 +12,21 @@ async function login(username, password)
             username,
             rank: 0,
          }, SECRET, {
-             expiresIn: 60 * 60 * 2,
+             expiresIn: 60 * 60 * 2, // 2 hours
              issuer: "",
          });
 
         return {
-            error: false,
-            rank: 0,
-            key: token,
+            token,
         };
     }
 
     return {
-        error: true,
+        token: false,
     };
 }
 
-river.subscribe(host, "auth", async (msg, channel) => {
+rapid.subscribe(host, "auth", async (msg, publish) => {
     const response = await login(msg.username, msg.password);
-    channel.publish("auth-response", response);
+    publish("auth-response", response);
 });
