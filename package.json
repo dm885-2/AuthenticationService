@@ -1,0 +1,25 @@
+{
+  "name": "authenticationservice",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "./src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DM885/AuthenticationService.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DM885/AuthenticationService/issues"
+  },
+  "homepage": "https://github.com/DM885/AuthenticationService#readme",
+  "dependencies": {
+    "@ovcina/rapidriver": "^1.1.0",
+    "jose": "^4.1.2"
+  }
+}
