@@ -1,6 +1,6 @@
 {
   "name": "authenticationservice",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "type": "module",
   "main": "./src/index.js",
@@ -20,6 +20,6 @@
   "homepage": "https://github.com/DM885/AuthenticationService#readme",
   "dependencies": {
     "@ovcina/rapidriver": "^1.1.0",
-    "jose": "^4.1.2"
+    "jsonwebtoken": "^8.5.1"
   }
 }
