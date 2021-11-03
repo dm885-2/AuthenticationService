@@ -1,5 +1,6 @@
+import jwt from "jsonwebtoken";
 import rapid from "@ovcina/rapidriver";
-import {host, getTokenData} from "./helpers.js";
+import {host, getTokenData, SECRET} from "./helpers.js";
 
 const REFRESH_SECRET = process.env.refreshSecret ?? `$[/AJLN;A~djDLh,/kDg?K$Y=*dY44B4)TV*u*X5jjug9#.k>3QLzN;C9K2J36_:`;  // JWT refresh secret
 
@@ -11,6 +12,10 @@ export async function generateAccessToken(refreshToken)
     const token = await getTokenData(refreshToken, REFRESH_SECRET);
     if(token)
     {
+        // Remove meta-data
+        delete token.iss;
+        delete token.iat;
+
         ret.token = jwt.sign({ 
             ...token,
          }, SECRET, {
@@ -45,7 +50,6 @@ export async function login(username, password)
 
     return ret;
 }
-
 
 if(process.env.RAPID === "1")
 {
