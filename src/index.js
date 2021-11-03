@@ -34,18 +34,16 @@ export async function generateAccessToken(refreshToken)
 
 /**
  * Returns a RefreshToken if the username and password is valid.
- * @param {*} username 
- * @param {*} password 
- * @returns 
+ * @param string username 
+ * @param string password 
+ * @returns RefreshToken|false
  */
 export async function login(username, password)
 {
-    let ret = {
-        token: false,
-    };
-    if(1)
+    let token = false;
+    if(1) // TODO: login check, after DB has been figured out.
     {
-        ret.token = jwt.sign({ 
+        token = jwt.sign({ 
             username,
             rank: 0,
          }, REFRESH_SECRET, {
@@ -53,7 +51,9 @@ export async function login(username, password)
          });
     }
 
-    return ret;
+    return {
+        token,
+    };
 }
 
 if(process.env.RAPID)
@@ -63,8 +63,8 @@ if(process.env.RAPID)
         publish("auth-response", response);
     });
     
-    rapid.subscribe(host, "auth-token", async (msg, publish) => {
+    rapid.subscribe(host, "accesstoken", async (msg, publish) => {
         const response = await generateAccessToken(msg.token);
-        publish("auth-token-response", response);
+        publish("accesstoken-response", response);
     });
 }
