@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 import rapid from "@ovcina/rapidriver";
-import {host, getTokenData, SECRET} from "./helpers.js";
+import {host, getTokenData, SECRET, query} from "./helpers.js";
 
 const REFRESH_SECRET = process.env.refreshSecret ?? `$[/AJLN;A~djDLh,/kDg?K$Y=*dY44B4)TV*u*X5jjug9#.k>3QLzN;C9K2J36_:`;  // JWT refresh secret
 
@@ -41,14 +42,20 @@ export async function generateAccessToken(refreshToken)
 export async function login(username, password)
 {
     let token = false;
-    if(1) // TODO: login check, after DB has been figured out.
+    const userStmt = await query("SELECT `rank`, `password` FROM `users` WHERE `mail` = ?", [username]);
+    if(userStmt && userStmt.length > 0)
     {
-        token = jwt.sign({ 
-            username,
-            rank: 0,
-         }, REFRESH_SECRET, {
-             issuer: "",
-         });
+        const userData = userStmt[0];
+        const correct = await bcrypt.compare(password, userData.password);
+        if(correct)
+        {
+            token = jwt.sign({ 
+                username,
+                rank: userData.rank,
+             }, REFRESH_SECRET, {
+                 issuer: "",
+             });
+        }
     }
 
     return {
