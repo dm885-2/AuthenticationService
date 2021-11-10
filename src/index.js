@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import rapid from "@ovcina/rapidriver";
+import rapidriver from "@ovcina/rapidriver";
 import {host, getTokenData, SECRET, query} from "./helpers.js";
 
 const REFRESH_SECRET = process.env.refreshSecret ?? `$[/AJLN;A~djDLh,/kDg?K$Y=*dY44B4)TV*u*X5jjug9#.k>3QLzN;C9K2J36_:`;  // JWT refresh secret
@@ -42,7 +42,7 @@ export async function generateAccessToken(refreshToken)
 export async function login(username, password)
 {
     let token = false;
-    const userStmt = await query("SELECT `rank`, `password` FROM `users` WHERE `mail` = ?", [username]);
+    const userStmt = await query("SELECT `rank`, `password` FROM `users` WHERE `mail` = ?", [username.toLowerCase()]);
     if(userStmt && userStmt.length > 0)
     {
         const userData = userStmt[0];
@@ -63,15 +63,63 @@ export async function login(username, password)
     };
 }
 
+/**
+ * Creates a user if the user dosent exist.
+ * @param string username 
+ * @param string password 
+ * @param number rank 
+ * @returns true|false depending on if the user was created.
+ */
+export async function signUp(username, password, rank)
+{
+    let error = true;
+    const userStmt = await query("SELECT `mail` FROM `users` WHERE `mail` = ?", [username.toLowerCase()]);
+    if(userStmt && userStmt.length === 0)
+    {
+        const hashedPass = await bcrypt.hash(password, 10);
+        const newUserStmt = await query("INSERT INTO users (`mail`, `rank`, `password`) VALUES (?, ?, ?)", [
+            username.toLowerCase(),
+            hashedPass,
+            rank
+        ]);
+        if(newUserStmt)
+        {
+            error = false;
+        }
+    }
+
+    return {
+        error,
+    };
+}
+
 if(process.env.RAPID)
 {
-    rapid.subscribe(host, "auth", async (msg, publish) => {
-        const response = await login(msg.username, msg.password);
-        publish("auth-response", response);
-    });
-    
-    rapid.subscribe(host, "accesstoken", async (msg, publish) => {
-        const response = await generateAccessToken(msg.token);
-        publish("accesstoken-response", response);
-    });
+    rapidriver.subscribe(host, [
+        {
+            river: "auth",
+            event: "signIn",
+            work: async (msg, publish) => {
+                const response = await login(msg.username, msg.password);
+                publish("signIn-response", response);
+            }, 
+        },
+        {
+            river: "auth",
+            event: "signUp",
+            work: async (msg, publish) => {
+                const response = await signUp(msg.username, msg.password, msg.rank);
+                publish("signUn-response", response);
+            }, 
+        },
+        {
+            river: "auth",
+            event: "accessToken",
+            work: async (msg, publish) => {
+                const response = await generateAccessToken(msg.token);
+                publish("accessToken-response", response);
+            }, 
+        },
+    ]);
+
 }
