@@ -6,7 +6,7 @@ export const host = process.env.riverUrl ?? `amqp://localhost`;  // RabbitMQ url
 
 /**
  * Returns the token payload if its valid, otherwise it returns false.
- * @param String token 
+ * @param String token
  * @returns Promise<false|TokenData>
  */
 export function getTokenData(token, secretOrPublicKey = SECRET)
@@ -15,21 +15,21 @@ export function getTokenData(token, secretOrPublicKey = SECRET)
 }
 
 let connection;
-if(process.env.mysqlHost)
+if(process.env.mysqlDb)
 {
     connection = mysql.createConnection({
-        host     : process.env.mysqlHost,
-        user     : process.env.mysqlUser,
-        password : process.env.mysqlPass,
-        database : 'db'
+        host     : process.env.mysqlHost ?? 'localhost',
+        user     : process.env.mysqlUser ?? 'root',
+        password : process.env.mysqlPass ?? '',
+        database : process.env.mysqlDb
     });
     connection.connect();
 }
 
 /**
- * Runs a SQL query on the DB. 
- * @param string stmt 
- * @param ?string[] WHERE 
+ * Runs a SQL query on the DB.
+ * @param string stmt
+ * @param ?string[] WHERE
  * @returns results[]|false
  */
 export function query(stmt, WHERE = [])

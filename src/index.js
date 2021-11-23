@@ -7,7 +7,7 @@ const REFRESH_SECRET = process.env.refreshSecret ?? `$[/AJLN;A~djDLh,/kDg?K$Y=*d
 
 /**
  * Generates a AccessToken if the RefreshToken is valid.
- * @param string refreshToken 
+ * @param string refreshToken
  * @returns AccessToken|false
  */
 export async function generateAccessToken(refreshToken)
@@ -20,7 +20,7 @@ export async function generateAccessToken(refreshToken)
         delete token.iss;
         delete token.iat;
 
-        ret = jwt.sign({ 
+        ret = jwt.sign({
             ...token,
          }, SECRET, {
              expiresIn: 60 * 15, // 15 minutes
@@ -35,21 +35,22 @@ export async function generateAccessToken(refreshToken)
 
 /**
  * Returns a RefreshToken if the username and password is valid.
- * @param string username 
- * @param string password 
+ * @param string username
+ * @param string password
  * @returns RefreshToken|false
  */
 export async function login(username, password)
 {
     let token = false;
-    const userStmt = await query("SELECT `rank`, `password` FROM `users` WHERE `mail` = ?", [username.toLowerCase()]);
+    const userStmt = await query("SELECT `rank`, `password` FROM `users` WHERE `email` = ?", [username.toLowerCase()]);
     if(userStmt && userStmt.length > 0)
     {
         const userData = userStmt[0];
+        console.log(userData.password);
         const correct = await bcrypt.compare(password, userData.password);
         if(correct)
         {
-            token = jwt.sign({ 
+            token = jwt.sign({
                 username,
                 rank: userData.rank,
              }, REFRESH_SECRET, {
@@ -65,19 +66,19 @@ export async function login(username, password)
 
 /**
  * Creates a user if the user dosent exist.
- * @param string username 
- * @param string password 
- * @param number rank 
+ * @param string username
+ * @param string password
+ * @param number rank
  * @returns true|false depending on if the user was created.
  */
 export async function signUp(username, password, rank)
 {
     let error = true;
-    const userStmt = await query("SELECT `mail` FROM `users` WHERE `mail` = ?", [username.toLowerCase()]);
+    const userStmt = await query("SELECT `email` FROM `users` WHERE `email` = ?", [username.toLowerCase()]);
     if(userStmt && userStmt.length === 0)
     {
         const hashedPass = await bcrypt.hash(password, 10);
-        const newUserStmt = await query("INSERT INTO users (`mail`, `rank`, `password`) VALUES (?, ?, ?)", [
+        const newUserStmt = await query("INSERT INTO users (`email`, `password`, `rank`) VALUES (?, ?, ?)", [
             username.toLowerCase(),
             hashedPass,
             rank
@@ -87,7 +88,6 @@ export async function signUp(username, password, rank)
             error = false;
         }
     }
-
     return {
         error,
     };
@@ -101,24 +101,28 @@ if(process.env.RAPID)
             event: "signIn",
             work: async (msg, publish) => {
                 const response = await login(msg.username, msg.password);
+                response.session = msg.session;
                 publish("signIn-response", response);
-            }, 
+            },
         },
         {
             river: "auth",
             event: "signUp",
             work: async (msg, publish) => {
+                console.log(msg);
                 const response = await signUp(msg.username, msg.password, msg.rank);
-                publish("signUn-response", response);
-            }, 
+                response.session = msg.session;
+                publish("signUp-response", response);
+            },
         },
         {
             river: "auth",
             event: "accessToken",
             work: async (msg, publish) => {
                 const response = await generateAccessToken(msg.token);
+                response.session = msg.session;
                 publish("accessToken-response", response);
-            }, 
+            },
         },
     ]);
 
