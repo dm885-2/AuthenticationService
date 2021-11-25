@@ -101,7 +101,8 @@ if(process.env.RAPID)
             event: "signIn",
             work: async (msg, publish) => {
                 const response = await login(msg.username, msg.password);
-                response.session = msg.session;
+                response.sessionId = msg.sessionId;
+                response.requestId = msg.requestId;
                 publish("signIn-response", response);
             },
         },
@@ -111,7 +112,8 @@ if(process.env.RAPID)
             work: async (msg, publish) => {
                 console.log(msg);
                 const response = await signUp(msg.username, msg.password, msg.rank);
-                response.session = msg.session;
+                response.sessionId = msg.sessionId;
+                response.requestId = msg.requestId;
                 publish("signUp-response", response);
             },
         },
@@ -120,7 +122,8 @@ if(process.env.RAPID)
             event: "accessToken",
             work: async (msg, publish) => {
                 const response = await generateAccessToken(msg.token);
-                response.session = msg.session;
+                response.sessionId = msg.sessionId;
+                response.requestId = msg.requestId;
                 publish("accessToken-response", response);
             },
         },
