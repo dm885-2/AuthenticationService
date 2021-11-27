@@ -100,6 +100,7 @@ if(process.env.RAPID)
             river: "auth",
             event: "signIn",
             work: async (msg, publish) => {
+                console.log("Yo got something bro!");
                 const response = await login(msg.username, msg.password);
                 response.sessionId = msg.sessionId;
                 response.requestId = msg.requestId;
@@ -111,6 +112,7 @@ if(process.env.RAPID)
             event: "signUp",
             work: async (msg, publish) => {
                 console.log(msg);
+                console.log("Yo got something bro!");
                 const response = await signUp(msg.username, msg.password, msg.rank);
                 response.sessionId = msg.sessionId;
                 response.requestId = msg.requestId;
@@ -121,6 +123,7 @@ if(process.env.RAPID)
             river: "auth",
             event: "accessToken",
             work: async (msg, publish) => {
+                console.log("Yo got something bro!");
                 const response = await generateAccessToken(msg.token);
                 response.sessionId = msg.sessionId;
                 response.requestId = msg.requestId;
