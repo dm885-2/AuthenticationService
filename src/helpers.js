@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import rapidriver from "@ovcina/rapidriver";
 import mysql from "mysql";
 
 export const SECRET = process.env.SECRET ?? `3(?<,t2mZxj$5JT47naQFTXwqNWP#W>'*Kr!X!(_M3N.u8v}%N/JYGHC.Zwq.!v-`;  // JWT secret
@@ -6,6 +7,11 @@ export const SECRET = process.env.SECRET ?? `3(?<,t2mZxj$5JT47naQFTXwqNWP#W>'*Kr
 const rapidUser = process.env.rapidUser ?? "guest";
 const rapidPass = process.env.rapidPass ?? "guest";
 export const host = "amqp://" + rapidUser + ":" + rapidPass + "@" + (process.env.riverUrl ?? `localhost`);  // RabbitMQ url
+
+export function subscribe(eventListeners = [])
+{
+    eventListeners.forEach(listener => rapidriver.subscribe(host, [listener]));
+}
 
 /**
  * Returns the token payload if its valid, otherwise it returns false.
