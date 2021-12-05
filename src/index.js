@@ -41,27 +41,30 @@ export async function generateAccessToken(refreshToken)
  */
 export async function login(username, password)
 {
-    let token = false;
-    const userStmt = await query("SELECT `rank`, `password` FROM `users` WHERE `email` = ?", [username.toLowerCase()]);
-    if(userStmt && userStmt.length > 0)
+    let ret = {
+        token: false,
+    };
+    if(username && password)
     {
-        const userData = userStmt[0];
-        console.log(userData.password);
-        const correct = await bcrypt.compare(password, userData.password);
-        if(correct)
+        const userStmt = await query("SELECT `rank`, `password` FROM `users` WHERE `email` = ?", [username.toLowerCase()]);
+        if(userStmt && userStmt.length > 0)
         {
-            token = jwt.sign({
-                username,
-                rank: userData.rank,
-             }, REFRESH_SECRET, {
-                 issuer: "",
-             });
+            const userData = userStmt[0];
+            const correct = await bcrypt.compare(password, userData.password);
+            if(correct)
+            {
+                ret.rank = userData.rank;
+                ret.token = jwt.sign({
+                    username,
+                    rank: userData.rank,
+                }, REFRESH_SECRET, {
+                    issuer: "",
+                });
+            }
         }
     }
 
-    return {
-        token,
-    };
+    return ret;
 }
 
 /**
@@ -74,18 +77,23 @@ export async function login(username, password)
 export async function signUp(username, password, rank)
 {
     let error = true;
-    const userStmt = await query("SELECT `email` FROM `users` WHERE `email` = ?", [username.toLowerCase()]);
-    if(userStmt && userStmt.length === 0)
+    console.log("Sign up!", username, password, rank);
+    if(username && password)
     {
-        const hashedPass = await bcrypt.hash(password, 10);
-        const newUserStmt = await query("INSERT INTO users (`email`, `password`, `rank`) VALUES (?, ?, ?)", [
-            username.toLowerCase(),
-            hashedPass,
-            rank
-        ]);
-        if(newUserStmt)
+        console.log("Hehe");
+        const userStmt = await query("SELECT `email` FROM `users` WHERE `email` = ?", [username.toLowerCase()]);
+        if(userStmt && userStmt.length === 0)
         {
-            error = false;
+            const hashedPass = await bcrypt.hash(password, 10);
+            const newUserStmt = await query("INSERT INTO users (`email`, `password`, `rank`) VALUES (?, ?, ?)", [
+                username.toLowerCase(),
+                hashedPass,
+                rank
+            ]);
+            if(newUserStmt)
+            {
+                error = false;
+            }
         }
     }
     return {
@@ -110,7 +118,6 @@ if(process.env.RAPID)
             river: "auth",
             event: "signUp",
             work: async (msg, publish) => {
-                console.log(msg);
                 const response = await signUp(msg.username, msg.password, msg.rank);
                 response.sessionId = msg.sessionId;
                 response.requestId = msg.requestId;
@@ -128,5 +135,4 @@ if(process.env.RAPID)
             },
         },
     ]);
-
 }

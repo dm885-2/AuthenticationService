@@ -6,7 +6,8 @@
   "main": "./src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "cross-env RAPID=1 node src/index.js"
+    "start": "cross-env RAPID=1 node src/index.js",
+    "startCompose": "cross-env RAPID=1 mysqlDb=dm885 mysqlPass=test mysqlUser=user nodemon src/index.js"
   },
   "repository": {
     "type": "git",
@@ -19,7 +20,7 @@
   },
   "homepage": "https://github.com/DM885/AuthenticationService#readme",
   "dependencies": {
-    "@ovcina/rapidriver": "^2.0.0",
+    "@ovcina/rapidriver": "^2.0.7",
     "bcrypt": "^5.0.1",
     "jsonwebtoken": "^8.5.1",
     "mysql": "^2.18.1"
