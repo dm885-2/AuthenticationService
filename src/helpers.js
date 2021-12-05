@@ -2,7 +2,10 @@ import jwt from "jsonwebtoken";
 import mysql from "mysql";
 
 export const SECRET = process.env.SECRET ?? `3(?<,t2mZxj$5JT47naQFTXwqNWP#W>'*Kr!X!(_M3N.u8v}%N/JYGHC.Zwq.!v-`;  // JWT secret
-export const host = process.env.riverUrl ?? `amqp://localhost`;  // RabbitMQ url
+
+const rabbitUser = process.env.rabbitUser ?? "guest";
+const rabbitPass = process.env.rabbitPass ?? "guest";
+export const host = "amqp://" + rabbitUser + ":" + rabbitPass + "@" + (process.env.rabbitHost ?? `localhost`);  // RabbitMQ url
 
 /**
  * Returns the token payload if its valid, otherwise it returns false.
