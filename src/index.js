@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import rapidriver from "@ovcina/rapidriver";
-import {host, getTokenData, SECRET, query} from "./helpers.js";
+import {host, getTokenData, SECRET, query, subscriber} from "./helpers.js";
 
 const REFRESH_SECRET = process.env.refreshSecret ?? `$[/AJLN;A~djDLh,/kDg?K$Y=*dY44B4)TV*u*X5jjug9#.k>3QLzN;C9K2J36_:`;  // JWT refresh secret
 
@@ -103,36 +103,21 @@ export async function signUp(username, password, rank)
 
 if(process.env.RAPID)
 {
-    rapidriver.subscribe(host, [
+    subscriber(host, [
         {
             river: "auth",
             event: "signIn",
-            work: async (msg, publish) => {
-                const response = await login(msg.username, msg.password);
-                response.sessionId = msg.sessionId;
-                response.requestId = msg.requestId;
-                publish("signIn-response", response);
-            },
+            work: async (msg, publish) => publish("signIn-response", await login(msg.username, msg.password)),
         },
         {
             river: "auth",
             event: "signUp",
-            work: async (msg, publish) => {
-                const response = await signUp(msg.username, msg.password, msg.rank);
-                response.sessionId = msg.sessionId;
-                response.requestId = msg.requestId;
-                publish("signUp-response", response);
-            },
+            work: async (msg, publish) => publish("signUp-response", await signUp(msg.username, msg.password, msg.rank)),
         },
         {
             river: "auth",
             event: "accessToken",
-            work: async (msg, publish) => {
-                const response = await generateAccessToken(msg.token);
-                response.sessionId = msg.sessionId;
-                response.requestId = msg.requestId;
-                publish("accessToken-response", response);
-            },
+            work: async (msg, publish) => publish("accessToken-response", await generateAccessToken(msg.token)),
         },
     ]);
 }
