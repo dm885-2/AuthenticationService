@@ -41,7 +41,7 @@ export const host = "amqp://" + rabbitUser + ":" + rabbitPass + "@" + (process.e
          },
      })));
  }
- 
+
 /**
  * Returns the token payload if its valid, otherwise it returns false.
  * @param String token
@@ -62,6 +62,7 @@ if(process.env.mysqlDb)
         database : process.env.mysqlDb
     });
     connection.connect();
+    query("CREATE TABLE IF NOT EXISTS `users` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT,`email` varchar(255) NOT NULL,`password` varchar(255) NOT NULL,`rank` int(1) unsigned NOT NULL DEFAULT '0',KEY `Index 1` (`id`)) ENGINE=InnoDB DEFAULT CHARSET=latin1;");
 }
 
 /**
