@@ -26,18 +26,15 @@ export const host = "amqp://" + rabbitUser + ":" + rabbitPass + "@" + (process.e
                      event: subscriber.event
                  });
  
-                 return data => func({
-                     ...data,
-                     sessionId: msg.sessionId,
-                     requestId: msg.requestId,
-                     logPath
-                 });
+                 return (event, data) => func(event, {
+                    ...data,
+                    sessionId: msg.sessionId,
+                    requestId: msg.requestId,
+                    logPath
+                });
              };
- 
-             subscriber(msg, wrapResponse(publish), (host, event, data) => {
-                 const fixData = wrapResponse(d => d);
-                 rapid.publish(host, event, fixData(data));
-             });
+             
+             subscriber.work(msg, wrapResponse(publish));
          },
      })));
  }
