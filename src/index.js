@@ -46,7 +46,7 @@ export async function login(username, password)
     };
     if(username && password)
     {
-        const userStmt = await query("SELECT `rank`, `password` FROM `users` WHERE `email` = ?", [username.toLowerCase()]);
+        const userStmt = await query("SELECT `id`, `rank`, `password` FROM `users` WHERE `email` = ?", [username.toLowerCase()]);
         if(userStmt && userStmt.length > 0)
         {
             const userData = userStmt[0];
@@ -55,6 +55,7 @@ export async function login(username, password)
             {
                 ret.rank = userData.rank;
                 ret.token = jwt.sign({
+                    uid: userData.id,
                     username,
                     rank: userData.rank,
                 }, REFRESH_SECRET, {
