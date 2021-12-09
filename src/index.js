@@ -16,16 +16,23 @@ export async function generateAccessToken(refreshToken)
     const token = await getTokenData(refreshToken, REFRESH_SECRET);
     if(token)
     {
-        // Remove meta-data
-        delete token.iss;
-        delete token.iat;
 
-        ret = jwt.sign({
-            ...token,
-         }, SECRET, {
-             expiresIn: 60 * 15, // 15 minutes
-             issuer: "",
-         });
+        const userStmt = await query("SELECT * FROM `users` WHERE `id` = ?", [
+            token.uid
+        ]);
+        if(userStmt.length > 0)
+        {
+            const userData = userStmt[0];
+            
+            ret = jwt.sign({
+                uid: userData.id,
+                rank: userData.rank,
+                solverLimit: userData.solverLimit,
+            }, SECRET, {
+                expiresIn: 60 * 15, // 15 minutes
+                issuer: "",
+            });
+        }
     }
 
     return {
@@ -56,8 +63,6 @@ export async function login(username, password)
                 ret.rank = userData.rank;
                 ret.token = jwt.sign({
                     uid: userData.id,
-                    username,
-                    rank: userData.rank,
                 }, REFRESH_SECRET, {
                     issuer: "",
                 });
