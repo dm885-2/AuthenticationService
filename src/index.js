@@ -83,10 +83,8 @@ export async function login(username, password)
 export async function signUp(username, password, rank)
 {
     let error = true;
-    console.log("Sign up!", username, password, rank);
     if(username && password)
     {
-        console.log("Hehe");
         const userStmt = await query("SELECT `email` FROM `users` WHERE `email` = ?", [username.toLowerCase()]);
         if(userStmt && userStmt.length === 0)
         {
