@@ -1,7 +1,10 @@
 
 
 /** 	Sample taken from CRUD test 		**/
+describe('CAN PASS', () => {
+    expect(true).to.be.true;
 
+});
 // describe('READ Test', () => {
 //     //add a files before each test
 //     beforeEach(()=> {
