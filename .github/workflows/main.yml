@@ -77,7 +77,6 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: 16.x
-        cache: 'npm'        
     - name: Run Setup-Script
       run: |
         chmod +x .github/k3s-setup.sh
