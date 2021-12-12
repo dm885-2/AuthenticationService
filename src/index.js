@@ -36,7 +36,7 @@ export async function generateAccessToken(refreshToken)
     }
 
     return {
-        token: ret,
+        refreshToken: ret,
     };
 }
 
