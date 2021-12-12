@@ -1,0 +1,170 @@
+# This workflow will do a clean install of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: DM885 CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CICD_TOGGLE: true                              # Change this to true when you are ready to use the pipeline
+  PROJECT_ID: ${{secrets.GKE_PROJECT}}
+  GKE_CLUSTER: buildcluster
+  GKE_ZONE: europe-north1
+  NAMESPACE: rabbits                                              # Maybe change this, probably not though.
+  DEPLOYMENT_NAME: AuthenticationService                                           # Change this to match the name in the deployment.yaml
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Check for cancellation
+      - name: Check for cancellation
+        if: env.CICD_TOGGLE == 'false'
+        uses: andymckay/cancel-action@0.2
+        continue-on-error: true
+      # Check out code
+      - name: Checkout
+        uses: actions/checkout@v2
+      # This is the a separate action that sets up buildx runner
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      # So now you can use Actions' own caching!
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{secrets.DOCKERHUB_USERNAME}}
+          password: ${{secrets.DOCKERHUB_TOKEN}}
+      # And make it available for the builds
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64
+          tags: ${{secrets.DOCKERHUB_USERNAME}}/${{env.DEPLOYMENT_NAME}}-testing
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+        # This ugly bit is necessary if you don't want your cache to grow forever
+        # till it hits GitHub's limit of 5GB.
+        # Temp fix
+        # https://github.com/docker/build-push-action/issues/252
+        # https://github.com/moby/buildkit/issues/1896
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+    
+  testing:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: debianmaster/actions-k3s@master
+      id: k3s
+      with:
+        version: 'v1.21.2-k3s1'
+    - name: Use Node.js 16.x
+      uses: actions/setup-node@v2
+      with:
+        node-version: 16.x
+        cache: 'npm'        
+    - name: Run Setup-Script
+      run: |
+        chmod +x .github/k3s-setup.sh
+        chmod +x .github/k3s-wait.sh
+        chmod +x ./test_services.sh
+        ./.github/k3s-setup.sh
+        ./test_services.sh
+      shell: bash
+    - name: Wait for rollout
+      run: |
+        ./.github/k3s-wait.sh
+    - name: Deploy Service
+      run: |
+        cat ./deployment.yaml | sed "s/${{secrets.DOCKERHUB_USERNAME}}\/${{env.DEPLOYMENT_NAME}}/${{secrets.DOCKERHUB_USERNAME}}\/${{env.DEPLOYMENT_NAME}}-testing/g" | kubectl -n ${{ env.NAMESPACE }} apply -f -
+    - name: Wait for service rollout
+      run: |
+        ./.github/k3s-wait.sh
+        kubectl get pods 
+        kubectl -n ${{ env.NAMESPACE }} get pods
+        kubectl -n ${{ env.NAMESPACE }} get svc
+    - name: Port Forward
+      run: kubectl -n ${{ env.NAMESPACE }} port-forward svc/gateway 3000:80 & pid=$!
+    - run: npm ci
+    - run: npm run build --if-present
+    - run: npm test
+    - name: Integration Testing
+      run: npx cypress run --headless --browser chrome
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build,testing]
+    steps:
+    - uses: actions/checkout@v2  
+    # Push image
+    # This is the a separate action that sets up buildx runner
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+    # So now you can use Actions' own caching!
+    - name: Cache Docker layers
+      uses: actions/cache@v2
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{secrets.DOCKERHUB_USERNAME}}
+        password: ${{secrets.DOCKERHUB_TOKEN}}
+    # And make it available for the builds
+    - name: Build and push
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        platforms: linux/amd64
+        tags: ${{secrets.DOCKERHUB_USERNAME}}/${{env.DEPLOYMENT_NAME}}
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache-new
+      # This ugly bit is necessary if you don't want your cache to grow forever
+      # till it hits GitHub's limit of 5GB.
+      # Temp fix
+      # https://github.com/docker/build-push-action/issues/252
+      # https://github.com/moby/buildkit/issues/1896
+    - name: Move cache
+      run: |
+        rm -rf /tmp/.buildx-cache
+        mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+    # Setup gcloud CLI
+    - uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
+      with:
+        service_account_key: ${{ secrets.GKE_SA_KEY }}
+        project_id: ${{ secrets.GKE_PROJECT }}
+        
+    # Configure Docker to use the gcloud command-line tool as a credential
+    # helper for authentication
+    - run: |-
+        gcloud --quiet auth configure-docker
+    
+    - uses: google-github-actions/get-gke-credentials@fb08709ba27618c31c09e014e1d8364b02e5042e
+      with:
+        cluster_name: ${{ env.GKE_CLUSTER }}
+        location: ${{ env.GKE_ZONE }}
+        credentials: ${{ secrets.GKE_SA_KEY }}
+        
+     # Deploy the Docker image to the GKE BUILD cluster
+    - name: Deploy to GKE Cluster
+      run: kubectl -n ${{ env.NAMESPACE }} apply -f ./deployment.yaml && kubectl -n ${{ env.NAMESPACE }} rollout restart deployment/${{ env.DEPLOYMENT_NAME }}
