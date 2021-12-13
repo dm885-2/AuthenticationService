@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import rapidriver from "@ovcina/rapidriver";
-import {host, getTokenData, SECRET, query, subscriber} from "./helpers.js";
+import query, {host, getTokenData, SECRET, subscriber} from "./helpers.js";
 
 const REFRESH_SECRET = process.env.refreshSecret ?? `$[/AJLN;A~djDLh,/kDg?K$Y=*dY44B4)TV*u*X5jjug9#.k>3QLzN;C9K2J36_:`;  // JWT refresh secret
 

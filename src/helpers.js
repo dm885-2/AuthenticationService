@@ -68,7 +68,7 @@ if(process.env.mysqlDb)
  * @param ?string[] WHERE
  * @returns results[]|false
  */
-export function query(stmt, WHERE = [])
+export default function query(stmt, WHERE = [])
 {
     return new Promise(r => connection.query(stmt, WHERE, (err, results) => r(err ? false : results)));
 }

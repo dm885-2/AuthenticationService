@@ -1,10 +1,24 @@
-// import {login} from "./index.js";
+import {jest} from '@jest/globals';
+import {login} from "./index.js";
+import query from "./helpers.js";
 
-test('can pass', () => {
-    // ping({token: "",}, (channel, message) => {
-    //     expect(channel).toBe("pong");
-    //     expect(message.check).toBe(false);
+jest.mock('./helpers.js');
+
+describe("Authentication", () => {
+    // beforeEach(() => {
+    //     query.mockClear();
+    //   });
+
+    // test('can login', async () => {
+    //     console.log(query);
+    //     query.mockResolvedValue({
+    //         token: true,
+    //     });
+    //     const resp = await login("test", "pass");
+    //     expect(resp.token).not.toBe(false);
     // });
     
-    expect(true).toBe(true);
+    test('can work', () => {
+        expect(true).not.toBe(false);
+    });
 });

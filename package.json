@@ -5,7 +5,7 @@
   "type": "module",
   "main": "./src/index.js",
   "scripts": {
-    "test": "cross-env TESTING=1 npx jest",
+    "test": "cross-env TESTING=1 NODE_OPTIONS=--experimental-vm-modules npx jest",
     "start": "cross-env RAPID=1 node src/index.js",
     "debugDocker": "cross-env RAPID=1 mysqlHost=localhost mysqlPass=password mysqlDb=dm885 mysqlUser=root nodemon src/index.js"
   },
@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "jest": "^27.3.1",
+    "@jest/globals": "^27.3.1",
     "cypress": "^9.1.0",
     "nodemon": "^2.0.14"
   }
