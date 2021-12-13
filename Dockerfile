@@ -1,12 +1,18 @@
-FROM node:16
+FROM node:16.3-alpine3.12
 
-RUN mkdir -p /home/app
+# Create app directory
+WORKDIR /usr/src/app
 
-COPY . /home/app
+# Install app dependencies
+# A wildcard is used to ensure both package.json AND package-lock.json are copied
+# where available (npm@5+)
+COPY package*.json ./
 
-WORKDIR /home/app
+# If you are building your code for production
+RUN npm ci --only=production
 
-RUN npm install
+# Bundle app source
+COPY . .
 
+EXPOSE 8080
 CMD ["npm", "run", "start"]
-
