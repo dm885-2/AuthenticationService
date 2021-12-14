@@ -1,9 +1,10 @@
-const IP = "http://localhost:8080";
+const IP = Cypress.env('DEV') == 1 ? "http://localhost:8080" : "http://localhost:80";
 const time = Date.now();
 const login = {
     username: `u${time}`,
     password: `p${time}`,
 };
+let refreshToken;
 
 describe('Authentication', () => {
     it("Cant login with wrong credentials", () => cy.request('POST', `${IP}/auth/login`, login).then((response) => expect(response.body).to.have.property('error', true)));
@@ -16,7 +17,7 @@ describe('Authentication', () => {
 
     it("Can login with new credentials", () => cy.request('POST', `${IP}/auth/login`, login).then((response) => {
         expect(response.body).to.have.property('error', false);
-        cy.wrap(response.body.refreshToken).as('refreshToken');
+        refreshToken = response.body.refreshToken;
     }));
 
     it("Cant use an invalid refreshToken", () => cy.request('POST', `${IP}/auth/accessToken`, {
@@ -25,10 +26,8 @@ describe('Authentication', () => {
 
     
     it("Can use a valid refreshToken", () => {
-        // cy.get('@refreshToken').then(refreshToken => {
-            cy.request('POST', `${IP}/auth/accessToken`, {
-                refreshToken: this.refreshToken
-            }).then((response) => expect(response.body).to.have.property('error', true))
-        // });
+        cy.request('POST', `${IP}/auth/accessToken`, {
+            refreshToken
+        }).then((response) => expect(response.body).to.have.property('error', false))
     });
 });
