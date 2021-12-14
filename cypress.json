@@ -2,5 +2,5 @@
     "baseUrl": "http://127.0.0.1:80",
     "requestTimeout": 2000,
     "defaultCommandTimeout": 5000,
-    "retries": 3
+    "retries": 10
 }

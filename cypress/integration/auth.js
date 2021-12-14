@@ -1,4 +1,4 @@
-const IP = Cypress.env('DEV') == 1 ? "http://localhost:8080" : "http://localhost:80";
+const IP = Cypress.env('DEV') == 1 ? "http://localhost:8080" : "http://localhost:3000";
 const time = Date.now();
 const login = {
     username: `u${time}`,
@@ -24,7 +24,6 @@ describe('Authentication', () => {
         refreshToken: "some-invalid-token",
     }).then((response) => expect(response.body).to.have.property('error', true)));
 
-    
     it("Can use a valid refreshToken", () => {
         cy.request('POST', `${IP}/auth/accessToken`, {
             refreshToken
