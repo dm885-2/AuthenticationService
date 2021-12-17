@@ -93,7 +93,6 @@ jobs:
         cat ./deployment.yaml | sed "s/${{secrets.DOCKERHUB_USERNAME}}\/${{env.DEPLOYMENT_NAME}}/${{secrets.DOCKERHUB_USERNAME}}\/${{env.DEPLOYMENT_NAME}}-testing/g" | kubectl -n ${{ env.NAMESPACE }} apply -f -
     - name: Wait for service rollout
       run: |
-        sleep 10
         ./test_services.sh
         ./.github/k3s-wait.sh
         kubectl get pods 
@@ -101,12 +100,13 @@ jobs:
         kubectl -n ${{ env.NAMESPACE }} get svc
     - name: Port Forward
       run: kubectl -n ${{ env.NAMESPACE }} port-forward svc/gateway 3000:80 & pid=$!
+    - name: TEST
+      run: kubectl exec -it pods/mysql-0 -- mysql -u root -ppassword123 -e 'SHOW TABLES FROM db;'
     - run: npm ci
     - run: npm run build --if-present
     - run: npm test
     - name: Integration Testing
       run: |
-        sleep 10
         npx cypress run --headless --browser chrome
 
   deploy:
