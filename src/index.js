@@ -104,6 +104,10 @@ export async function signUp(username, password, rank)
         error,
     };
 }
+setImmediate(() => {
+    signUp(process.env.userUsername, process.env.userPassword, 0);
+    signUp(process.env.adminUsername, process.env.adminPassword, 0);    
+});
 
 if(process.env.RAPID)
 {
