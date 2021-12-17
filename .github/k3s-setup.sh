@@ -13,6 +13,7 @@ kubectl -n rabbits apply -f https://raw.githubusercontent.com/DM885/MySQLK8S/mai
 kubectl apply -f https://raw.githubusercontent.com/DM885/MySQLK8S/main/mysql-pv.yaml
 kubectl apply -f https://raw.githubusercontent.com/DM885/MySQLK8S/main/mysql-pvc.yaml
 helm install mysql -f https://raw.githubusercontent.com/DM885/MySQLK8S/main/mysql-values.yaml bitnami/mysql
+kubectl -n rabbits apply -f https://raw.githubusercontent.com/DM885/MySQLK8S/main/auth-secrets.yaml
 
 # # RABBITMQ 
 kubectl -n rabbits apply -f https://raw.githubusercontent.com/DM885/RabbitMQK8S/main/rabbit-rbac.yaml
