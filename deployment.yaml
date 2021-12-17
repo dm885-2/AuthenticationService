@@ -46,6 +46,26 @@ spec:
             secretKeyRef:
               name: rabbitmq-secrets
               key: RABBIT_PASSWORD
+        - name: userUsername
+          valueFrom:
+            secretKeyRef:
+              name: auth-secrets
+              key: user-username
+        - name: userPassword
+          valueFrom:
+            secretKeyRef:
+              name: auth-secrets
+              key: RABBIT_PASSWORD
+        - name: adminUsername
+          valueFrom:
+            secretKeyRef:
+              name: auth-secrets
+              key: admin-username
+        - name: adminPassword
+          valueFrom:
+            secretKeyRef:
+              name: auth-secrets
+              key: admin-password
 ---
 apiVersion: v1
 kind: Service
