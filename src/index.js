@@ -74,6 +74,17 @@ export async function login(username, password)
 }
 
 /**
+ * Returns the data of the given userID, if it exists.
+ * @param string username
+ * @param string password
+ * @returns UserData|false
+ */
+export async function getUser(id)
+{
+    return await query("SELECT * FROM `users` WHERE `id` = ?", [id]);
+}
+
+/**
  * Creates a user if the user dosent exist.
  * @param string username
  * @param string password
@@ -144,6 +155,11 @@ if(process.env.RAPID)
             river: "auth",
             event: "getUsers",
             work: async (msg, publish) => publish("getUsers-response", await getUsers()),
+        },
+        {
+            river: "auth",
+            event: "getUser",
+            work: async (msg, publish) => publish("getUser-response", await getUser(msg.id)),
         },
     ]);
 }
