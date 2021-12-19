@@ -12,7 +12,6 @@ const REFRESH_SECRET = process.env.refreshSecret ?? `$[/AJLN;A~djDLh,/kDg?K$Y=*d
  */
 export async function generateAccessToken(refreshToken)
 {
-    console.log("Gen access token", refreshToken);
     let ret = false;
     const token = await getTokenData(refreshToken, REFRESH_SECRET);
     if(token)
@@ -52,7 +51,6 @@ export async function login(username, password)
     let ret = {
         token: false,
     };
-    console.log("Login", username, password);
 
     if(username && password)
     {
@@ -84,7 +82,6 @@ export async function login(username, password)
  */
 export async function getUser(id)
 {
-    console.log("Get user", id);
     const stmt = await query("SELECT * FROM `users` WHERE `id` = ?", [id]);
     return {
         data: stmt && stmt.length > 0 ? stmt[0] : false,
@@ -100,7 +97,6 @@ export async function getUser(id)
  */
 export async function signUp(username, password, rank)
 {
-    console.log("Sing up", username, password);
     let error = true;
     if(username && password && username.length > 0 && password.length > 0)
     {
