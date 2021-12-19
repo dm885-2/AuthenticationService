@@ -123,10 +123,13 @@ export async function signUp(username, password, rank)
  * @returns [users]|false
  */
 export async function getUsers(){
-    const userStmt = await query("SELECT `email` FROM `users`");
+    const userStmt = await query("SELECT * FROM `users`");
     
     return {
-        data: userStmt ? userStmt : [],
+        data: (userStmt ? userStmt : []).map(user => {
+            delete user.password;
+            return user;
+        }),
     };
 }   
 
