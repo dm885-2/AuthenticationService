@@ -125,10 +125,9 @@ export async function signUp(username, password, rank)
 export async function getUsers(){
     const userStmt = await query("SELECT `email` FROM `users`");
     
-    if (userStmt != false){
-        ret.data = userStmt || [];       
-    }
-    return ret;
+    return {
+        data: userStmt ? userStmt : [],
+    };
 }   
 
 setImmediate(() => {
