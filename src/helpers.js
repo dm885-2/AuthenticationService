@@ -61,7 +61,10 @@ if(process.env.mysqlDb)
     connection.connect();
     const res = await query("CREATE TABLE IF NOT EXISTS `users` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT,`email` varchar(255) NOT NULL,`password` varchar(255) NOT NULL,`solverLimit` int(11) unsigned NOT NULL DEFAULT '3', `rank` int(1) unsigned NOT NULL DEFAULT '0',KEY `Index 1` (`id`)) ENGINE=InnoDB DEFAULT CHARSET=latin1;");
 
-    if(!res) process.exit(1);
+    if(!res){
+        console.log("Error", res);
+        process.exit(1);
+    }
 }
 
 /**
