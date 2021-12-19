@@ -81,8 +81,9 @@ export async function login(username, password)
  */
 export async function getUser(id)
 {
+    const stmt = await query("SELECT * FROM `users` WHERE `id` = ?", [id]);
     return {
-        data: await query("SELECT * FROM `users` WHERE `id` = ?", [id]),
+        data: stmt && stmt.length > 0 ? stmt[0] : false,
     };
 }
 
