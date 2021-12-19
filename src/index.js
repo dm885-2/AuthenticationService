@@ -81,7 +81,9 @@ export async function login(username, password)
  */
 export async function getUser(id)
 {
-    return await query("SELECT * FROM `users` WHERE `id` = ?", [id]);
+    return {
+        data: await query("SELECT * FROM `users` WHERE `id` = ?", [id]),
+    };
 }
 
 /**
@@ -94,7 +96,7 @@ export async function getUser(id)
 export async function signUp(username, password, rank)
 {
     let error = true;
-    if(username && password)
+    if(username && password && username.length > 0 && password.length > 0)
     {
         const userStmt = await query("SELECT `email` FROM `users` WHERE `email` = ?", [username.toLowerCase()]);
         if(userStmt && userStmt.length === 0)
