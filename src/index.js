@@ -104,6 +104,19 @@ export async function signUp(username, password, rank)
         error,
     };
 }
+/**
+ * Returns all the users.
+ * @returns [users]|false
+ */
+export async function getUsers(){
+    const userStmt = await query("SELECT `email` FROM `users`");
+    
+    if (userStmt != false){
+        ret.data = userStmt || [];       
+    }
+    return ret;
+}   
+
 setImmediate(() => {
     signUp(process.env.userUsername, process.env.userPassword, 0);
     signUp(process.env.adminUsername, process.env.adminPassword, 1);    
@@ -126,6 +139,11 @@ if(process.env.RAPID)
             river: "auth",
             event: "accessToken",
             work: async (msg, publish) => publish("accessToken-response", await generateAccessToken(msg.token)),
+        },
+        {
+            river: "auth",
+            event: "getUsers",
+            work: async (msg, publish) => publish("getUsers-response", await getUsers()),
         },
     ]);
 }
