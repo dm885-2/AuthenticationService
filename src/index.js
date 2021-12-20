@@ -139,25 +139,30 @@ export async function deleteUser(msg) {
       msg.id
     ]);
 
-    await API.call("GET", "files/all/0").then(resp => {
-        if(resp && !resp.error)
-        {
-            resp.results.forEach(file => {
-                await API.call("DELETE", "files/" + file.fileId);
-            });
-        }
-    });
-    await API.call("GET", "files/all/1").then(resp => {
-        if(resp && !resp.error)
-        {
-            resp.results.forEach(file => {
-                await API.call("DELETE", "files/" + file.fileId);
-            });
-        }
+    const [dataContent, modelContent] = await Promise.all([
+        publishAndWait("get-all-files", "get-all-files-response", 0, {
+            userId: msg.id,
+            filetype: 0
+        }, -1),
+        publishAndWait("get-all-files", "get-all-files-response", 0, {
+            userId: msg.id,
+            filetype: 1
+        }, -1),
+    ]);
+
+    // For each filee in dataContent, delete the file
+    dataContent.forEach(file => {
+        rapidriver.publish(host, "delete-file", {
+            fileId: file.fileId
+        })
     });
 
-    // Need to stop the queue 
-
+    // For each file in modelContent, delete the file
+    modelContent.forEach(file => {
+        rapidriver.publish(host, "delete-file", {
+            fileId: file.fileId
+        })
+    });
     
     return {
         error: !stmt,
@@ -201,5 +206,10 @@ if(process.env.RAPID)
             event: "getUser",
             work: async (msg, publish) => publish("getUser-response", await getUser(msg.id)),
         },
+        {
+            river: "auth",
+            event: "deleteUser",
+            work: async (msg, publish) => publish("deleteUser-response", await deleteUser(msg)),
+        }
     ]);
 }

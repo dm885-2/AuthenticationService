@@ -77,3 +77,8 @@ export default function query(stmt, WHERE = [])
 {
     return new Promise(r => connection.query(stmt, WHERE, (err, results) => r(err ? false : results)));
 }
+
+export function publishAndWait(event, responseEvent, sessionID, data, userID)
+{
+    return new Promise(r => RapidManager.publishAndSubscribe(event, responseEvent, sessionID, data, r, userID));
+}
