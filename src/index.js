@@ -134,6 +134,40 @@ export async function getUsers(){
     };
 }   
 
+export async function deleteUser(msg) {
+    const stmt = await helpers.query("DELETE FROM `users` WHERE `id` = ? ", [
+      msg.id
+    ]);
+
+    await API.call("GET", "files/all/0").then(resp => {
+        if(resp && !resp.error)
+        {
+            resp.results.forEach(file => {
+                await API.call("DELETE", "files/" + file.fileId);
+            });
+        }
+    });
+    await API.call("GET", "files/all/1").then(resp => {
+        if(resp && !resp.error)
+        {
+            resp.results.forEach(file => {
+                await API.call("DELETE", "files/" + file.fileId);
+            });
+        }
+    });
+
+    // Need to stop the queue 
+
+    
+    return {
+        error: !stmt,
+        message: "User deleted succesfully"
+    
+    };
+  
+    
+}
+
 setImmediate(() => {
     signUp(process.env.userUsername, process.env.userPassword, 0);
     signUp(process.env.adminUsername, process.env.adminPassword, 1);    
