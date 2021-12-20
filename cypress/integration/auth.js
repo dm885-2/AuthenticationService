@@ -57,6 +57,7 @@ describe('Authentication', () => {
         cy.request({
             method: "GET",
              url: "/users",
+             failOnStatusCode: false,
              headers: {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + Cypress.env("token")
