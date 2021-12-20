@@ -50,4 +50,38 @@ describe('Authentication', () => {
         .then((response) => {expect(response.body).to.have.property('error', false)})
         .its('status').should('eq', 200);
     });
+
+    it("A user should not be able to retrive users", () => {
+        cy.loginAsUser();
+        cy.getAT();
+        cy.request({
+            method: "GET",
+             url: "/users",
+             headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + Cypress.env("token")
+            }
+        }).then(res => {
+            expect(res).to.have.property("status", 401);
+            return;
+        });
+    }
+    );
+    it("A admin should be able to retrive users", () => {
+        cy.loginAsAdmin();
+        cy.getAT();
+        cy.request({
+            method: "GET",
+             url: "/users",
+             headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + Cypress.env("token")
+            }
+        }).then(res => {
+            expect(res).to.have.property("status", 200);
+            return;
+        });
+    }
+    );
+    
 });
