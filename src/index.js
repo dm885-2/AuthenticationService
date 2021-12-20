@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import rapidriver from "@ovcina/rapidriver";
-import query, {host, getTokenData, SECRET, subscriber, publishAndWait} from "./helpers.js";
+import helpers from "./helpers.js";
 
 const REFRESH_SECRET = process.env.refreshSecret ?? `$[/AJLN;A~djDLh,/kDg?K$Y=*dY44B4)TV*u*X5jjug9#.k>3QLzN;C9K2J36_:`;  // JWT refresh secret
 
@@ -13,11 +13,11 @@ const REFRESH_SECRET = process.env.refreshSecret ?? `$[/AJLN;A~djDLh,/kDg?K$Y=*d
 export async function generateAccessToken(refreshToken)
 {
     let ret = false;
-    const token = await getTokenData(refreshToken, REFRESH_SECRET);
+    const token = await helpers.getTokenData(refreshToken, REFRESH_SECRET);
     if(token)
     {
 
-        const userStmt = await query("SELECT * FROM `users` WHERE `id` = ?", [
+        const userStmt = await helpers.query("SELECT * FROM `users` WHERE `id` = ?", [
             token.uid
         ]);
         if(userStmt.length > 0)
@@ -28,7 +28,7 @@ export async function generateAccessToken(refreshToken)
                 uid: userData.id,
                 rank: userData.rank,
                 solverLimit: userData.solverLimit,
-            }, SECRET, {
+            }, helpers.SECRET, {
                 expiresIn: 60 * 15, // 15 minutes
                 issuer: "",
             });
@@ -54,7 +54,7 @@ export async function login(username, password)
 
     if(username && password)
     {
-        const userStmt = await query("SELECT `id`, `rank`, `password` FROM `users` WHERE `email` = ?", [username.toLowerCase()]);
+        const userStmt = await helpers.query("SELECT `id`, `rank`, `password` FROM `users` WHERE `email` = ?", [username.toLowerCase()]);
         if(userStmt && userStmt.length > 0)
         {
             const userData = userStmt[0];
@@ -82,7 +82,7 @@ export async function login(username, password)
  */
 export async function getUser(id)
 {
-    const stmt = await query("SELECT * FROM `users` WHERE `id` = ?", [id]);
+    const stmt = await helpers.query("SELECT * FROM `users` WHERE `id` = ?", [id]);
     return {
         data: stmt && stmt.length > 0 ? stmt[0] : false,
     };
@@ -100,11 +100,11 @@ export async function signUp(username, password, rank)
     let error = true;
     if(username && password && username.length > 0 && password.length > 0)
     {
-        const userStmt = await query("SELECT `email` FROM `users` WHERE `email` = ?", [username.toLowerCase()]);
+        const userStmt = await helpers.query("SELECT `email` FROM `users` WHERE `email` = ?", [username.toLowerCase()]);
         if(userStmt && userStmt.length === 0)
         {
             const hashedPass = await bcrypt.hash(password, 10);
-            const newUserStmt = await query("INSERT INTO users (`email`, `password`, `rank`) VALUES (?, ?, ?)", [
+            const newUserStmt = await helpers.query("INSERT INTO users (`email`, `password`, `rank`) VALUES (?, ?, ?)", [
                 username.toLowerCase(),
                 hashedPass,
                 rank
@@ -124,7 +124,7 @@ export async function signUp(username, password, rank)
  * @returns [users]|false
  */
 export async function getUsers(){
-    const userStmt = await query("SELECT * FROM `users`");
+    const userStmt = await helpers.query("SELECT * FROM `users`");
     
     return {
         data: (userStmt ? userStmt : []).map(user => {
@@ -132,26 +132,23 @@ export async function getUsers(){
             return user;
         }),
     };
-}   
+}
 
 export async function deleteUser(id) {
     let userId = parseInt(id);
-    let stmt = await query("DELETE FROM `users` WHERE `id` = ? ", [id]);
+    let stmt = await helpers.query("DELETE FROM `users` WHERE `id` = ? ", [id]);
 
     const [dataContent, modelContent] = await Promise.all([
-        publishAndWait("get-all-files", "get-all-files-response", 0, {
+        helpers.publishAndWait("get-all-files", "get-all-files-response", 0, {
             userId: userId,
             filetype: 0
         }, -1),
-        publishAndWait("get-all-files", "get-all-files-response", 0, {
+        helpers.publishAndWait("get-all-files", "get-all-files-response", 0, {
             userId: userId,
             filetype: 1
         }, -1)
     ]);
 
-    
-    console.log(dataContent);
-    console.log(modelContent);
 
     // For each filee in dataContent, delete the file
     dataContent.forEach(file => {
@@ -167,19 +164,6 @@ export async function deleteUser(id) {
         })
     });
 
-    let files = await  publishAndWait("get-all-files", "get-all-files-response", 0, {
-        userId: userId,
-        filetype: 0
-    }, -1)
-    let files2 = await  publishAndWait("get-all-files", "get-all-files-response", 1, {
-        userId: userId,
-        filetype: 0
-    }, -1)
-
-    console.log(files)
-    console.log(files2)
-
-    
     return {
         error: !stmt,
         message: "User deleted succesfully"
@@ -196,7 +180,7 @@ setImmediate(() => {
 
 if(process.env.RAPID)
 {
-    subscriber(host, [
+    helpers.subscriber(helpers.host, [
         {
             river: "auth",
             event: "signIn",
@@ -222,10 +206,5 @@ if(process.env.RAPID)
             event: "getUser",
             work: async (msg, publish) => publish("getUser-response", await getUser(msg.id)),
         },
-        {
-            river: "auth",
-            event: "delete-user",
-            work: async (msg, publish) => publish("delete-user-response", await deleteUser(msg.id)),
-        }
     ]);
 }

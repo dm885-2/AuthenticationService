@@ -2,20 +2,20 @@ import jwt from "jsonwebtoken";
 import rapid from "@ovcina/rapidriver";
 import mysql from "mysql";
 
-export const SECRET = process.env.SECRET ?? `3(?<,t2mZxj$5JT47naQFTXwqNWP#W>'*Kr!X!(_M3N.u8v}%N/JYGHC.Zwq.!v-`;  // JWT secret
-
-import rapidManager from "./rapid/RapidManager.js";
+const SECRET = process.env.SECRET ?? `3(?<,t2mZxj$5JT47naQFTXwqNWP#W>'*Kr!X!(_M3N.u8v}%N/JYGHC.Zwq.!v-`;  // JWT secret
 
 const rabbitUser = process.env.rabbitUser ?? "guest";
 const rabbitPass = process.env.rabbitPass ?? "guest";
-export const host = "amqp://" + rabbitUser + ":" + rabbitPass + "@" + (process.env.rabbitHost ?? `localhost`);  // RabbitMQ url
+const host = "amqp://" + rabbitUser + ":" + rabbitPass + "@" + (process.env.rabbitHost ?? `localhost`);  // RabbitMQ url
+
+import rapidManager from "./rapid/RapidManager.js";
 
 /**
  * Automatically adds logging, request and sessionIDs to rabbit responses.
  * @param stromg host 
  * @param [] subscribers 
  */
- export function subscriber(host, subscribers)
+function subscriber(host, subscribers)
  {
      rapid.subscribe(host, subscribers.map(subscriber => ({
          river: subscriber.river,
@@ -46,7 +46,7 @@ export const host = "amqp://" + rabbitUser + ":" + rabbitPass + "@" + (process.e
  * @param String token
  * @returns Promise<false|TokenData>
  */
-export function getTokenData(token, secretOrPublicKey = SECRET)
+function getTokenData(token, secretOrPublicKey = SECRET)
 {
     return new Promise(resolve => jwt.verify(token, secretOrPublicKey, (err, data) => resolve(err ? false : data)));
 }
@@ -75,13 +75,22 @@ if(process.env.mysqlDb)
  * @param ?string[] WHERE
  * @returns results[]|false
  */
-export default function query(stmt, WHERE = [])
+function query(stmt, WHERE = [])
 {
     return new Promise(r => connection.query(stmt, WHERE, (err, results) => r(err ? false : results)));
 }
 
 const RapidManager = new rapidManager(host);
-export function publishAndWait(event, responseEvent, sessionID, data, userID)
+function publishAndWait(event, responseEvent, sessionID, data, userID)
 {
     return new Promise(r => RapidManager.publishAndSubscribe(event, responseEvent, sessionID, data, r, userID));
+}
+export default {
+   
+    query,
+    getTokenData,
+    subscriber,
+    publishAndWait,
+    SECRET,
+    host
 }
