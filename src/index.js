@@ -1,8 +1,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import rapidriver from "@ovcina/rapidriver";
-import query, {host, getTokenData, SECRET, subscriber} from "./helpers.js";
-import {publishAndWait} from "./rapid/RapidManager.js ";
+import query, {host, getTokenData, SECRET, subscriber, publishAndWait} from "./helpers.js";
 
 const REFRESH_SECRET = process.env.refreshSecret ?? `$[/AJLN;A~djDLh,/kDg?K$Y=*dY44B4)TV*u*X5jjug9#.k>3QLzN;C9K2J36_:`;  // JWT refresh secret
 
@@ -135,35 +134,51 @@ export async function getUsers(){
     };
 }   
 
-export async function deleteUser(msg) {
-    const stmt = await helpers.query("DELETE FROM `users` WHERE `id` = ? ", [
-      msg.id
-    ]);
+export async function deleteUser(id) {
+    let userId = parseInt(id);
+    let stmt = await query("DELETE FROM `users` WHERE `id` = ? ", [id]);
 
     const [dataContent, modelContent] = await Promise.all([
         publishAndWait("get-all-files", "get-all-files-response", 0, {
-            userId: msg.id,
+            userId: userId,
             filetype: 0
         }, -1),
         publishAndWait("get-all-files", "get-all-files-response", 0, {
-            userId: msg.id,
+            userId: userId,
             filetype: 1
-        }, -1),
+        }, -1)
     ]);
+
+    
+    console.log(dataContent);
+    console.log(modelContent);
 
     // For each filee in dataContent, delete the file
     dataContent.forEach(file => {
         rapidriver.publish(host, "delete-file", {
-            fileId: file.fileId
+            fileId: parseInt(file.fileId)
         })
     });
 
     // For each file in modelContent, delete the file
     modelContent.forEach(file => {
         rapidriver.publish(host, "delete-file", {
-            fileId: file.fileId
+            fileId: parseInt(file.fileId)
         })
     });
+
+    let files = await  publishAndWait("get-all-files", "get-all-files-response", 0, {
+        userId: userId,
+        filetype: 0
+    }, -1)
+    let files2 = await  publishAndWait("get-all-files", "get-all-files-response", 1, {
+        userId: userId,
+        filetype: 0
+    }, -1)
+
+    console.log(files)
+    console.log(files2)
+
     
     return {
         error: !stmt,
@@ -209,8 +224,8 @@ if(process.env.RAPID)
         },
         {
             river: "auth",
-            event: "deleteUser",
-            work: async (msg, publish) => publish("deleteUser-response", await deleteUser(msg)),
+            event: "delete-user",
+            work: async (msg, publish) => publish("delete-user-response", await deleteUser(msg.id)),
         }
     ]);
 }

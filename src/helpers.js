@@ -4,6 +4,8 @@ import mysql from "mysql";
 
 export const SECRET = process.env.SECRET ?? `3(?<,t2mZxj$5JT47naQFTXwqNWP#W>'*Kr!X!(_M3N.u8v}%N/JYGHC.Zwq.!v-`;  // JWT secret
 
+import rapidManager from "./rapid/RapidManager.js";
+
 const rabbitUser = process.env.rabbitUser ?? "guest";
 const rabbitPass = process.env.rabbitPass ?? "guest";
 export const host = "amqp://" + rabbitUser + ":" + rabbitPass + "@" + (process.env.rabbitHost ?? `localhost`);  // RabbitMQ url
@@ -78,6 +80,7 @@ export default function query(stmt, WHERE = [])
     return new Promise(r => connection.query(stmt, WHERE, (err, results) => r(err ? false : results)));
 }
 
+const RapidManager = new rapidManager(host);
 export function publishAndWait(event, responseEvent, sessionID, data, userID)
 {
     return new Promise(r => RapidManager.publishAndSubscribe(event, responseEvent, sessionID, data, r, userID));
