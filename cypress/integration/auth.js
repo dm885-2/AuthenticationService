@@ -62,7 +62,7 @@ describe('Authentication', () => {
                 "Authorization": "Bearer " + Cypress.env("token")
             }
         }).then(res => {
-            expect(res).to.have.property("status", 401);
+            expect(res).to.have.property("status", 403);
             return;
         });
     }
