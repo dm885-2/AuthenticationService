@@ -2,13 +2,13 @@ import jwt from "jsonwebtoken";
 import rapid from "@ovcina/rapidriver";
 import mysql from "mysql";
 
+import rapidManager from "./rapid/RapidManager.js";
+
 const SECRET = process.env.SECRET ?? `3(?<,t2mZxj$5JT47naQFTXwqNWP#W>'*Kr!X!(_M3N.u8v}%N/JYGHC.Zwq.!v-`;  // JWT secret
 
 const rabbitUser = process.env.rabbitUser ?? "guest";
 const rabbitPass = process.env.rabbitPass ?? "guest";
 const host = "amqp://" + rabbitUser + ":" + rabbitPass + "@" + (process.env.rabbitHost ?? `localhost`);  // RabbitMQ url
-
-import rapidManager from "./rapid/RapidManager.js";
 
 /**
  * Automatically adds logging, request and sessionIDs to rabbit responses.
@@ -85,8 +85,8 @@ function publishAndWait(event, responseEvent, sessionID, data, userID)
 {
     return new Promise(r => RapidManager.publishAndSubscribe(event, responseEvent, sessionID, data, r, userID));
 }
+
 export default {
-   
     query,
     getTokenData,
     subscriber,
