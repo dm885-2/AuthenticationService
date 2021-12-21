@@ -89,6 +89,17 @@ export async function getUser(id)
 }
 
 /**
+ * Sets the solver limit for the given user-id.
+ */
+export async function setSolverLimit(id, val)
+{
+    const stmt = await helpers.query("UPDATE `users` SET `solverLimit` = ? WHERE `id` = ?", [val, id]);
+    return {
+        error: !!stmt,
+    };
+}
+
+/**
  * Creates a user if the user dosent exist.
  * @param string username
  * @param string password
@@ -209,6 +220,11 @@ if(process.env.RAPID)
             river: "auth",
             event: "getUser",
             work: async (msg, publish) => publish("getUser-response", await getUser(msg.id)),
+        },
+        {
+            river: "auth",
+            event: "set-solver-limit",
+            work: async (msg, publish) => publish("set-solver-limit-response", await setSolverLimit(msg.id, msg.value)),
         },
         {
             river: "auth",
