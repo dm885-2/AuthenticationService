@@ -1,42 +1,45 @@
 import rapid from '@ovcina/rapidriver';
+import RiverSubscription from './RiverSubscription.js';
+import uid from 'uid-safe';
 
-export default class RiverSubscription {
+export default class RapidManager {
 
-  _callbacks;
+  #host;
+  #subscriptions;
 
-  constructor(host, river, event) {
-    this._callbacks = {};
-
-    console.log(`Creating RiverSubscription with host: ${host}, river: ${river}, event: ${event}`);
-    // Create subscription to river.
-    rapid.subscribe(host, [{
-      river: river, event: event, work: res => {
-        console.log(`Received: ${JSON.stringify(res)}`);
-        const msg = res;
-
-        if (msg.sessionId in this._callbacks && msg.requestId in this._callbacks[msg.sessionId]) {
-          // Execute the callback for the session.
-          this._callbacks[msg.sessionId][msg.requestId](res);
-
-          // Delete from the callbacks as this one is executed now.
-          delete this._callbacks[msg.sessionId][msg.requestId];
-        } else {
-          console.warn(`No known callback function for session ID ${msg.sessionId}, request ID ${msg.requestId} and event ${event}.`);
-        }
-      }
-    }]);
+  constructor(host) {
+    this.#host = host;
+    this.#subscriptions = {};
   }
 
   /**
-   * Add callback function for certain session to the river subscription.
-   * @param sessionId - Session ID.
-   * @param requestId - Request ID.
-   * @param callback - Callback function to execute.
+   * Automaticly logs responses.
    */
-  addCallback(sessionId, requestId, callback) {
-    if (!(sessionId in this._callbacks)) {
-      this._callbacks[sessionId] = {};
+  #log(callback, userId)
+  {
+    return data => {
+      data.userId = userId;
+      // rapid.publish(this.#host, "logIt", data);
+      callback(data);
+    };
+  }
+
+  async publishAndSubscribe(event, callbackEvent, sessionId, data, callback, userId) {
+    if (!(callbackEvent in this.#subscriptions)) {
+      this.#subscriptions[callbackEvent] = new RiverSubscription(this.#host, 'authservice', callbackEvent);
     }
-    this._callbacks[sessionId][requestId] = callback;
+    const subscription = this.#subscriptions[callbackEvent];
+
+    // Generate a random request ID to differentiate incoming answers and add it to the data body.
+    const requestId = -1;
+
+    subscription.addCallback(sessionId, requestId, this.#log(callback, userId));
+
+    // Add session ID and request ID to data before we publish it.
+    data.sessionId = sessionId;
+    data.requestId = requestId;
+
+    rapid.publish(this.#host, event, data);
+    // setTimeout(() => rapid.publish(this.#host, event, data), 20);
   }
 }

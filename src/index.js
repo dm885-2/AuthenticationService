@@ -134,43 +134,47 @@ export async function getUsers(){
     };
 }
 
-export async function deleteUser(id) {
-    let userId = parseInt(id);
+export async function deleteUser(id, publish) {
+    let userId = Number(id);
     let stmt = await helpers.query("DELETE FROM `users` WHERE `id` = ? ", [id]);
 
-    const [dataContent, modelContent] = await Promise.all([
-        helpers.publishAndWait("get-all-files", "get-all-files-response", 0, {
-            userId: userId,
-            filetype: 0
-        }, -1),
-        helpers.publishAndWait("get-all-files", "get-all-files-response", 0, {
-            userId: userId,
-            filetype: 1
+    if(stmt)
+    {
+        // Delete all its jobs
+        const {data: jobsHistory} = await helpers.publishAndWait("job-history", "job-history-response", -1, {
+            userID: userId
         }, -1)
-    ]);
+        jobsHistory.forEach(job => publish("remove-job", {
+            id: job.id
+        }));;
 
+        const [dataContent, modelContent] = await Promise.all([
+            helpers.publishAndWait("get-all-files", "get-all-files-response", -1, {
+                userId: userId,
+                filetype: 0
+            }, -1),
+            helpers.publishAndWait("get-all-files", "get-all-files-response", -2, {
+                userId: userId,
+                filetype: 1
+            }, -1)
+        ]);
 
-    // For each filee in dataContent, delete the file
-    dataContent.forEach(file => {
-        rapidriver.publish(host, "delete-file", {
-            fileId: parseInt(file.fileId)
-        })
-    });
+        // For each filee in dataContent, delete the file
+        dataContent.forEach(file => rapidriver.publish(host, "delete-file", {
+            fileId: Number(file.fileId)
+        }));
 
-    // For each file in modelContent, delete the file
-    modelContent.forEach(file => {
-        rapidriver.publish(host, "delete-file", {
-            fileId: parseInt(file.fileId)
-        })
-    });
+        // For each file in modelContent, delete the file
+        modelContent.forEach(file => rapidriver.publish(host, "delete-file", {
+            fileId: Number(file.fileId)
+        }));
+    }
 
     return {
         error: !stmt,
         message: "User deleted succesfully"
     
     };
-  
-    
 }
 
 setImmediate(() => {
@@ -205,6 +209,11 @@ if(process.env.RAPID)
             river: "auth",
             event: "getUser",
             work: async (msg, publish) => publish("getUser-response", await getUser(msg.id)),
+        },
+        {
+            river: "auth",
+            event: "delete-user",
+            work: async (msg, publish) => publish("delete-user-response", await deleteUser(msg.id, publish)),
         },
     ]);
 }
