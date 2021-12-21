@@ -4,6 +4,7 @@ import mysql from "mysql";
 
 import rapidManager from "./rapid/RapidManager.js";
 
+
 const SECRET = process.env.SECRET ?? `3(?<,t2mZxj$5JT47naQFTXwqNWP#W>'*Kr!X!(_M3N.u8v}%N/JYGHC.Zwq.!v-`;  // JWT secret
 
 const rabbitUser = process.env.rabbitUser ?? "guest";
@@ -93,4 +94,4 @@ export default {
     publishAndWait,
     SECRET,
     host
-}
+};
