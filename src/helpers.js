@@ -2,6 +2,9 @@ import jwt from "jsonwebtoken";
 import rapid from "@ovcina/rapidriver";
 import mysql from "mysql";
 
+import rapidManager from "./rapid/RapidManager.js";
+
+
 const SECRET = process.env.SECRET ?? `3(?<,t2mZxj$5JT47naQFTXwqNWP#W>'*Kr!X!(_M3N.u8v}%N/JYGHC.Zwq.!v-`;  // JWT secret
 
 const rabbitUser = process.env.rabbitUser ?? "guest";
@@ -77,11 +80,18 @@ function query(stmt, WHERE = [])
 {
     return new Promise(r => connection.query(stmt, WHERE, (err, results) => r(err ? false : results)));
 }
+
+const RapidManager = new rapidManager(host);
+function publishAndWait(event, responseEvent, sessionID, data, userID)
+{
+    return new Promise(r => RapidManager.publishAndSubscribe(event, responseEvent, sessionID, data, r, userID));
+}
+
 export default {
-   
     query,
     getTokenData,
     subscriber,
+    publishAndWait,
     SECRET,
     host
-}
+};
